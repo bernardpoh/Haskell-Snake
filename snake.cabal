@@ -20,7 +20,7 @@ executable snake
     main-is:          Main.hs
     other-modules:    Logic
     -- other-extensions:
-    build-depends:    base ^>=4.17.2.1, random, text, ansi-terminal, ansi-terminal-game, linear, lens, containers
+    build-depends:    base >=4.17.2.1 && <4.19, random, text, ansi-terminal, ansi-terminal-game, linear, lens, containers
     hs-source-dirs:   app
     default-language: Haskell2010
     ghc-options: -threaded
