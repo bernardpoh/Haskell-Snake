@@ -4,8 +4,9 @@ To run:
 2. use the command `cabal run`
 
 Controls:
-- a - turn left
-- d - turn right
+- wasd: go that direction
+- x - turn left
+- z - turn right
 - r - restart game
 - q - quit game
 

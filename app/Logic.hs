@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell, Rank2Types, NoMonomorphismRestriction #-}
 
-module Logic where
+module Logic (turnleft, turnright, gonorth, goeast, gowest, gosouth, World, restart, logic, draw, makeWorld) where
 
 import Control.Lens hiding ((#))
 import Linear.V2
@@ -9,10 +9,6 @@ import Terminal.Game
 class GameState a where
     initstate::a
     logic::a->a
-    goleft::a->a
-    goright::a->a
-    restart::a->a
-    restart = id
     draw::a->Plane
 
 data World = World {
@@ -36,6 +32,18 @@ data Snake = Snake {
 makeLenses ''Snake
 makeLenses ''World
 
+turnleft, turnright,restart, gonorth, gosouth, goeast, gowest::World->World
+restart w = if w^.gameover then makeWorld (w^.gen) & highscore .~  w^.score else w
+turnleft = snake.direction %~ perp
+turnright = snake.direction %~ negate . perp
+gonorth = snake.direction %~ tryturningtowards (V2 (-1) 0)
+gosouth = snake.direction %~ tryturningtowards (V2 1 0)
+goeast = snake.direction %~ tryturningtowards (V2 0 (-1))
+gowest = snake.direction %~ tryturningtowards (V2 0 1)
+
+tryturningtowards::V2 Int -> V2 Int -> V2 Int
+tryturningtowards target current = if target == perp current || target == (negate . perp) current then target else current
+
 height::Int
 height = 20
 width::Int
@@ -47,9 +55,6 @@ makeWorld rng = initstate & gen .~ rng & addFruit & addFruit & addFruit
 instance GameState World where
     initstate = World initstate 0 False [] (mkStdGen 0) 0
     logic = checkCollisions . (snake %~ logic)
-    goleft = snake %~ goleft
-    goright = snake %~ goright
-    restart w = if w^.gameover then makeWorld (w^.gen) & highscore .~  w^.score else w
     draw w = vcat [scene, textbox]
         where
             scoretext = "Score: " ++ show (w^.score) ++ if w^.highscore == 0 then "" else "\nHigh score: " ++ show (w^.highscore)
@@ -96,14 +101,11 @@ moveSnake s = checkedSnake
 instance GameState Snake where
     initstate = Snake (V2 5 5) (V2 0 1) 0 0 [] False
     logic = moveSnake
-    goleft = direction %~ perp
-    goright = direction %~ negate . perp
     draw s =
         box height width '.'
         & foldr (.) id [(p1^._x+1, p1^._y+1) % cell (bodyShape (p2-p0)) | (p0, p1, p2) <- zip3 (s^.pos:s^.body) (s^.body) (s^.body&drop 1) & take (s^.len)] 
         & (s^.pos._x+1, s^.pos._y+1) % cell headShape
         where
-
         headShape::Char
         headShape = case s^.direction of
             V2 1 0 -> 'v'
